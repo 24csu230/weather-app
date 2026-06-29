@@ -125,34 +125,228 @@ body {
   transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
-/* Ambient dynamic weather backglow */
+/* Ambient dynamic weather backglow & animations container */
 .ambient-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  transition: all 1.5s ease;
+  overflow: hidden;
+}
+
+.ambient-background.bg-clear {
+  background: linear-gradient(135deg, #FF8C00 0%, #FFD700 100%);
+}
+.ambient-background.bg-cloudy {
+  background: linear-gradient(135deg, #4a5568 0%, #718096 100%);
+}
+.ambient-background.bg-rain {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+.ambient-background.bg-drizzle {
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+}
+.ambient-background.bg-thunderstorm {
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a0033 100%);
+}
+.ambient-background.bg-snow {
+  background: linear-gradient(135deg, #e8f4f8 0%, #b8d4e8 100%);
+}
+.ambient-background.bg-mist {
+  background: linear-gradient(135deg, #718096 0%, #a0aec0 100%);
+}
+.ambient-background.bg-haze {
+  background: linear-gradient(135deg, #c05621 0%, #dd6b20 100%);
+}
+
+.weather-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* 1. Clear/Sunny: rotating sun & sparkle dots */
+.sunny-sun {
+  position: absolute;
+  top: 12%;
+  right: 15%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, #fffbeb 20%, #fef08a 60%, #eab308 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 60px rgba(254, 240, 138, 0.8);
+}
+.sunny-rays {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 160px;
+  height: 160px;
+  border: 4px dashed rgba(254, 240, 138, 0.6);
+  border-radius: 50%;
+  animation: sun-rotate 25s linear infinite;
+}
+.sparkle-dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #fff;
+  animation: sparkle-anim 3s ease-in-out infinite;
+}
+@keyframes sun-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes sparkle-anim {
+  0%, 100% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* 2. Cloudy: floating cloud shapes */
+.cloud-particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  filter: blur(10px);
+  animation: drift-right linear infinite;
+}
+@keyframes drift-right {
+  0% { transform: translateX(-200px); }
+  100% { transform: translateX(105vw); }
+}
+
+/* 3. Rain: falling raindrops */
+.rain-particle {
+  position: absolute;
+  width: 1.5px;
+  height: 35px;
+  background: linear-gradient(transparent, #60a5fa);
+  animation: fall-diagonal linear infinite;
+}
+@keyframes fall-diagonal {
+  0% {
+    transform: translateY(-50px) translateX(0) rotate(15deg);
+    opacity: 0;
+  }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% {
+    transform: translateY(105vh) translateX(150px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+/* 4. Drizzle: small dots falling slowly */
+.drizzle-particle {
+  position: absolute;
+  width: 2.5px;
+  height: 2.5px;
+  background: rgba(147, 197, 253, 0.7);
+  border-radius: 50%;
+  animation: fall-drizzle linear infinite;
+}
+@keyframes fall-drizzle {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% {
+    transform: translateY(105vh);
+    opacity: 0;
+  }
+}
+
+/* 5. Thunderstorm: fast heavy rain + lightning bolts */
+.lightning-flash {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--bg-ambient-clear);
-  z-index: 0;
+  background: rgba(255, 255, 255, 0);
+  z-index: 5;
   pointer-events: none;
-  transition: background 1s ease;
+  animation: flash-lightning 6s linear infinite;
+}
+@keyframes flash-lightning {
+  0%, 93%, 95%, 97%, 100% { background: rgba(255, 255, 255, 0); }
+  94% { background: rgba(255, 255, 255, 0.35); }
+  96% { background: rgba(255, 255, 255, 0.2); }
 }
 
-/* Body level weather dynamic states */
-body.weather-clear .ambient-background {
-  background: var(--bg-ambient-clear);
+.thunder-bolt {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  background: #fff;
+  filter: drop-shadow(0 0 10px #93c5fd);
+  opacity: 0;
+  animation: flash-bolt 6s ease-out infinite;
+}
+@keyframes flash-bolt {
+  0%, 93.9%, 94.1%, 95.9%, 96.1%, 100% { opacity: 0; height: 0; }
+  94%, 96% { opacity: 1; height: 75%; }
 }
 
-body.weather-clouds .ambient-background {
-  background: var(--bg-ambient-clouds);
+/* 6. Snow: rotating snowflakes */
+.snow-particle {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  animation: fall-snow-rot linear infinite;
+}
+@keyframes fall-snow-rot {
+  0% {
+    transform: translateY(-20px) rotate(0deg) translateX(0);
+    opacity: 0;
+  }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% {
+    transform: translateY(105vh) rotate(360deg) translateX(40px);
+    opacity: 0;
+  }
 }
 
-body.weather-rain .ambient-background {
-  background: var(--bg-ambient-rain);
+/* 7. Mist/Fog: blurry drifting shapes */
+.mist-particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  filter: blur(35px);
+  border-radius: 50%;
+  animation: drift-mist-flow linear infinite;
+}
+@keyframes drift-mist-flow {
+  0% { transform: translateX(-250px) translateY(0); }
+  50% { transform: translateX(50vw) translateY(15px); }
+  100% { transform: translateX(105vw) translateY(0); }
 }
 
-body.weather-snow .ambient-background {
-  background: var(--bg-ambient-snow);
+/* 8. Hot/Haze: heat shimmer waves */
+.heat-shimmer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(transparent, rgba(221, 107, 32, 0.08));
+  filter: blur(5px);
+  animation: shimmer-anim-wave 4s ease-in-out infinite;
+}
+@keyframes shimmer-anim-wave {
+  0%, 100% { transform: skewX(-4deg) scaleY(1); }
+  50% { transform: skewX(4deg) scaleY(1.06); }
 }
 
 .app-container {

@@ -144,24 +144,166 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Update animated weather background gradients and particles
+  function updateAnimatedBackground(id) {
+    const bgContainer = document.querySelector('.ambient-background');
+    const particleContainer = document.getElementById('weather-particles');
+    if (!bgContainer || !particleContainer) return;
+
+    // Clear existing particle elements
+    particleContainer.innerHTML = '';
+    
+    // Reset background classes on body and container
+    bgContainer.className = 'ambient-background';
+    document.body.className = '';
+
+    let weatherClass = '';
+    if (id >= 200 && id <= 232) {
+      weatherClass = 'bg-thunderstorm';
+    } else if (id >= 300 && id <= 321) {
+      weatherClass = 'bg-drizzle';
+    } else if (id >= 500 && id <= 531) {
+      weatherClass = 'bg-rain';
+    } else if (id >= 600 && id <= 622) {
+      weatherClass = 'bg-snow';
+    } else if (id >= 700 && id <= 780) {
+      weatherClass = 'bg-mist';
+    } else if (id === 781) {
+      weatherClass = 'bg-haze';
+    } else if (id === 800) {
+      weatherClass = 'bg-clear';
+    } else if (id >= 801 && id <= 804) {
+      weatherClass = 'bg-cloudy';
+    } else {
+      weatherClass = 'bg-clear'; // Default fallback
+    }
+
+    bgContainer.classList.add(weatherClass);
+    document.body.classList.add(weatherClass);
+
+    // Generate dynamic weather elements inside #weather-particles
+    if (weatherClass === 'bg-clear') {
+      // Rotating sun with rays
+      const sun = document.createElement('div');
+      sun.className = 'sunny-sun';
+      const rays = document.createElement('div');
+      rays.className = 'sunny-rays';
+      sun.appendChild(rays);
+      particleContainer.appendChild(sun);
+
+      // Sparkle dots
+      for (let i = 0; i < 25; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'sparkle-dot';
+        dot.style.left = `${Math.random() * 100}%`;
+        dot.style.top = `${Math.random() * 100}%`;
+        dot.style.animationDelay = `${Math.random() * 3}s`;
+        dot.style.animationDuration = `${2 + Math.random() * 2}s`;
+        particleContainer.appendChild(dot);
+      }
+    } else if (weatherClass === 'bg-cloudy') {
+      // Floating cloud shapes
+      for (let i = 0; i < 6; i++) {
+        const cloud = document.createElement('div');
+        cloud.className = 'cloud-particle';
+        const size = 150 + Math.random() * 150;
+        cloud.style.width = `${size}px`;
+        cloud.style.height = `${size * 0.4}px`;
+        cloud.style.top = `${10 + Math.random() * 40}%`;
+        cloud.style.left = `-${size}px`;
+        cloud.style.animationDelay = `${i * 8}s`;
+        cloud.style.animationDuration = `${30 + Math.random() * 25}s`;
+        cloud.style.opacity = `${0.15 + Math.random() * 0.2}`;
+        particleContainer.appendChild(cloud);
+      }
+    } else if (weatherClass === 'bg-rain') {
+      // Fast falling blue lines
+      for (let i = 0; i < 60; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'rain-particle';
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.top = `-${40 + Math.random() * 50}px`;
+        drop.style.animationDelay = `${Math.random() * 2}s`;
+        drop.style.animationDuration = `${0.6 + Math.random() * 0.5}s`;
+        particleContainer.appendChild(drop);
+      }
+    } else if (weatherClass === 'bg-drizzle') {
+      // Slow small falling dots
+      for (let i = 0; i < 40; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'drizzle-particle';
+        dot.style.left = `${Math.random() * 100}%`;
+        dot.style.top = `-${10 + Math.random() * 30}px`;
+        dot.style.animationDelay = `${Math.random() * 3}s`;
+        dot.style.animationDuration = `${1.5 + Math.random() * 1.5}s`;
+        particleContainer.appendChild(dot);
+      }
+    } else if (weatherClass === 'bg-thunderstorm') {
+      // Lightning overlay
+      const lightning = document.createElement('div');
+      lightning.className = 'lightning-flash';
+      particleContainer.appendChild(lightning);
+
+      // Thunder bolts
+      const bolt = document.createElement('div');
+      bolt.className = 'thunder-bolt';
+      bolt.style.left = `${20 + Math.random() * 60}%`;
+      particleContainer.appendChild(bolt);
+
+      // Fast heavy rain
+      for (let i = 0; i < 50; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'rain-particle';
+        drop.style.left = `${Math.random() * 100}%`;
+        drop.style.top = `-${40 + Math.random() * 50}px`;
+        drop.style.animationDelay = `${Math.random() * 1.5}s`;
+        drop.style.animationDuration = `${0.5 + Math.random() * 0.4}s`;
+        particleContainer.appendChild(drop);
+      }
+    } else if (weatherClass === 'bg-snow') {
+      // Rotating white snowflakes drifting down
+      for (let i = 0; i < 50; i++) {
+        const flake = document.createElement('div');
+        flake.className = 'snow-particle';
+        const size = 5 + Math.random() * 12;
+        flake.style.width = `${size}px`;
+        flake.style.height = `${size}px`;
+        flake.style.left = `${Math.random() * 100}%`;
+        flake.style.top = `-${20 + Math.random() * 20}px`;
+        flake.style.animationDelay = `${Math.random() * 6}s`;
+        flake.style.animationDuration = `${4 + Math.random() * 5}s`;
+        particleContainer.appendChild(flake);
+      }
+    } else if (weatherClass === 'bg-mist') {
+      // Blurry white mist drifting shapes
+      for (let i = 0; i < 5; i++) {
+        const mist = document.createElement('div');
+        mist.className = 'mist-particle';
+        const size = 200 + Math.random() * 250;
+        mist.style.width = `${size}px`;
+        mist.style.height = `${size}px`;
+        mist.style.top = `${15 + Math.random() * 50}%`;
+        mist.style.left = `-${size}px`;
+        mist.style.animationDelay = `${i * 7}s`;
+        mist.style.animationDuration = `${25 + Math.random() * 20}s`;
+        particleContainer.appendChild(mist);
+      }
+    } else if (weatherClass === 'bg-haze') {
+      // Heat shimmer wave
+      const shimmer = document.createElement('div');
+      shimmer.className = 'heat-shimmer';
+      particleContainer.appendChild(shimmer);
+    }
+  }
+
   // Update weather dashboard components
   function updateWeatherUI(data) {
     const current = data.current;
     const forecast = data.forecast;
 
-    // Dynamic body backgrounds based on weather ID group
-    // 2xx Thunderstorm, 3xx Drizzle, 5xx Rain, 6xx Snow, 7xx Atmosphere (Fog, Mist), 800 Clear, 80x Clouds
+    // Update animated weather background based on weather condition ID
     const id = current.weather[0].id;
-    document.body.className = ''; // reset classes
-    if (id >= 200 && id < 600) {
-      document.body.classList.add('weather-rain');
-    } else if (id >= 600 && id < 700) {
-      document.body.classList.add('weather-snow');
-    } else if (id >= 801 && id <= 804) {
-      document.body.classList.add('weather-clouds');
-    } else {
-      document.body.classList.add('weather-clear');
-    }
+    updateAnimatedBackground(id);
 
     // Current weather details
     locationName.textContent = `${current.name}, ${current.sys.country}`;
@@ -404,21 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// AUTO LOCATION ON PAGE LOAD
-window.addEventListener('load', () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        fetchWeatherData({ lat, lon });
-      },
-      (error) => {
-        fetchWeatherData({ city: "New Delhi" });
-      }
-    );
-  }
-});
 function toggleHourly(dayId) {
     const grid = document.getElementById(dayId);
     const allGrids = document.querySelectorAll('.hourly-grid');
