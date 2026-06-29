@@ -212,76 +212,67 @@ document.addEventListener('DOMContentLoaded', () => {
   // Display daily forecast cards
   function renderForecast(forecastList) {
     forecastContainer.innerHTML = '';
-    const aggregated = aggregateForecast(forecastList);
 
-    aggregated.forEach(day => {
-      const card = document.createElement('div');
-      card.className = 'card forecast-card';
-      card.innerHTML = `
-        <span class="forecast-day">${day.dayName}</span>
-        <span class="forecast-date">${day.dateStr}</span>
-        <img class="forecast-icon" src="https://openweathermap.org/img/wn/${day.icon}@2x.png" alt="${day.description}">
-        <span class="forecast-desc" title="${day.description}">${day.description}</span>
-        <div class="forecast-temp">
-          <span class="forecast-max">${day.tempMax}°</span>
-          <span class="forecast-min">${day.tempMin}°</span>
-        </div>
-      `;
-      forecastContainer.appendChild(card);
-    });
-  }
-
-  // Aggregate 3-hour forecasts to 5-day forecasts
-  function aggregateForecast(list) {
+    // Group all items by date
     const grouped = {};
-
-    list.forEach(item => {
-      // Date key string "YYYY-MM-DD"
-      const datePart = item.dt_txt.split(' ')[0];
-      if (!grouped[datePart]) {
-        grouped[datePart] = [];
-      }
-      grouped[datePart].push(item);
+    forecastList.forEach(item => {
+        const date = new Date(item.dt * 1000);
+        const dateKey = date.toLocaleDateString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric'
+        });
+        if (!grouped[dateKey]) grouped[dateKey] = [];
+        grouped[dateKey].push(item);
     });
 
-    const dailyForecasts = [];
-    const dates = Object.keys(grouped).sort();
+    Object.entries(grouped).forEach(([dateKey, items], index) => {
+        const temps = items.map(i => i.main.temp);
+        const minTemp = Math.round(Math.min(...temps));
+        const maxTemp = Math.round(Math.max(...temps));
+        const icon = items[Math.floor(items.length / 2)].weather[0].icon;
+        const desc = items[Math.floor(items.length / 2)].weather[0].description;
+        const dayId = `day-${index}`;
 
-    // Standardize representation of 5 unique upcoming days
-    const datesToUse = dates.slice(0, 5);
-
-    datesToUse.forEach(dateStr => {
-      const dayData = grouped[dateStr];
-
-      let minTemp = Infinity;
-      let maxTemp = -Infinity;
-
-      dayData.forEach(item => {
-        if (item.main.temp_min < minTemp) minTemp = item.main.temp_min;
-        if (item.main.temp_max > maxTemp) maxTemp = item.main.temp_max;
-      });
-
-      // Look for midday report (12:00:00), fallback to middle item of dataset
-      let noonInterval = dayData.find(item => item.dt_txt.includes('12:00:00'));
-      if (!noonInterval) {
-        noonInterval = dayData[Math.floor(dayData.length / 2)];
-      }
-
-      const dateObj = new Date(noonInterval.dt * 1000);
-      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
-      const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-      dailyForecasts.push({
-        dayName,
-        dateStr: formattedDate,
-        tempMin: Math.round(minTemp),
-        tempMax: Math.round(maxTemp),
-        icon: noonInterval.weather[0].icon,
-        description: noonInterval.weather[0].description
-      });
+        const card = document.createElement('div');
+        card.className = 'card forecast-card';
+        card.innerHTML = `
+            <div class="day-header" onclick="toggleHourly('${dayId}')">
+                <span class="forecast-day">${dateKey.split(',')[0]}</span>
+                <span class="forecast-date">${dateKey.split(',').slice(1).join(',').trim()}</span>
+                <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
+                     alt="${desc}" style="width:40px;height:40px;">
+                <span class="forecast-desc" title="${desc}">${desc}</span>
+                <div class="forecast-temp">
+                    <span class="forecast-max">${maxTemp}°</span>
+                    <span class="forecast-min">${minTemp}°</span>
+                </div>
+                <span class="expand-arrow">▼</span>
+            </div>
+            <div class="hourly-grid" id="${dayId}" style="display:none;">
+                ${items.map(item => {
+                    const t = new Date(item.dt * 1000);
+                    const hours = t.getHours();
+                    const mins = String(t.getMinutes()).padStart(2, '0');
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    const h = hours % 12 || 12;
+                    const timeStr = `${h}:${mins} ${ampm}`;
+                    return `
+                        <div class="hourly-item">
+                            <div class="h-time">${timeStr}</div>
+                            <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png"
+                                 alt="${item.weather[0].description}"
+                                 style="width:32px;height:32px;">
+                            <div class="h-temp">${Math.round(item.main.temp)}°C</div>
+                            <div class="h-feel">Feels ${Math.round(item.main.feels_like)}°</div>
+                            <div class="h-humid">💧 ${item.main.humidity}%</div>
+                            <div class="h-wind">💨 ${Math.round(item.wind.speed * 3.6)}km/h</div>
+                            <div class="h-desc">${item.weather[0].description}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        forecastContainer.appendChild(card);
     });
-
-    return dailyForecasts;
   }
 
   // Live Clock calculation
@@ -428,3 +419,15 @@ window.addEventListener('load', () => {
     );
   }
 });
+function toggleHourly(dayId) {
+    const grid = document.getElementById(dayId);
+    const allGrids = document.querySelectorAll('.hourly-grid');
+    const allArrows = document.querySelectorAll('.expand-arrow');
+    const isOpen = grid.style.display !== 'none';
+    allGrids.forEach(g => g.style.display = 'none');
+    allArrows.forEach(a => a.textContent = '▼');
+    if (!isOpen) {
+        grid.style.display = 'grid';
+        grid.previousElementSibling.querySelector('.expand-arrow').textContent = '▲';
+    }
+}
