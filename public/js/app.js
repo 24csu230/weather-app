@@ -56,9 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const browserTimezoneOffsetSeconds = -new Date().getTimezoneOffset() * 60;
   startClock(browserTimezoneOffsetSeconds);
 
-  // Default City to load on first startup
-  const defaultCity = 'London';
-  fetchWeatherData({ city: defaultCity });
+  // Auto-location popup on load, fallback to "New Delhi" if denied/unsupported
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        fetchWeatherData({ lat, lon });
+      },
+      (error) => {
+        fetchWeatherData({ city: "New Delhi" });
+      }
+    );
+  } else {
+    fetchWeatherData({ city: "New Delhi" });
+  }
 
   // Handle Search Submission
   searchForm.addEventListener('submit', (e) => {
@@ -400,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 6000);
   }
 });
+
 // AUTO LOCATION ON PAGE LOAD
 window.addEventListener('load', () => {
   if (navigator.geolocation) {
@@ -407,12 +420,10 @@ window.addEventListener('load', () => {
       (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        // Call your existing weather by coords function
-        fetchWeatherByCoords(lat, lon);
+        fetchWeatherData({ lat, lon });
       },
       (error) => {
-        // If user denies, show default city
-        fetchWeatherByCity("New Delhi");
+        fetchWeatherData({ city: "New Delhi" });
       }
     );
   }
