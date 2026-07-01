@@ -3,6 +3,15 @@
  * -------------------------------------------------- */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Dismiss splash screen after 2.5s
+  setTimeout(() => {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 800);
+    }
+  }, 2500);
+
   // Elements
   const themeToggle = document.getElementById('theme-toggle');
   const searchForm = document.getElementById('search-form');
@@ -43,6 +52,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Dark/Light Theme from localStorage
   const savedTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Temperature click bounce
+  const tempTrigger = document.getElementById('temp-trigger');
+  if (tempTrigger) {
+    tempTrigger.addEventListener('click', () => {
+      currentTemp.classList.add('bounce-pulse');
+      setTimeout(() => currentTemp.classList.remove('bounce-pulse'), 500);
+    });
+  }
+
+  // Button ripple effects
+  const addRippleEffect = (btn) => {
+    btn.addEventListener('click', (e) => {
+      const circle = document.createElement('span');
+      const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+      const radius = diameter / 2;
+      const rect = btn.getBoundingClientRect();
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add('ripple');
+
+      const existing = btn.querySelector('.ripple');
+      if (existing) existing.remove();
+
+      btn.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
+    });
+  };
+
+  // Add ripples to search and locate buttons
+  const searchBtn = document.querySelector('.btn-search');
+  if (searchBtn) addRippleEffect(searchBtn);
+  if (geoBtn) addRippleEffect(geoBtn);
+  if (themeToggle) addRippleEffect(themeToggle);
 
   // Theme Toggle Event Listener
   themeToggle.addEventListener('click', () => {
@@ -300,10 +345,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateWeatherUI(data) {
     const current = data.current;
     const forecast = data.forecast;
+    const airPollution = data.airPollution;
 
     // Update animated weather background based on weather condition ID
     const id = current.weather[0].id;
     updateAnimatedBackground(id);
+
+    // Weather emoji next to temp
+    const emojiSpan = document.getElementById('temp-emoji');
+    if (emojiSpan) {
+      emojiSpan.textContent = getWeatherEmoji(id);
+    }
 
     // Current weather details
     locationName.textContent = `${current.name}, ${current.sys.country}`;
@@ -335,20 +387,192 @@ document.addEventListener('DOMContentLoaded', () => {
       : `${feelsLikeDiffVal > 0 ? 'Warmer' : 'Colder'} by ${Math.abs(Math.round(feelsLikeDiffVal))}°C`;
 
     // Sunrise & Sunset calculations
-    // Times are relative to city location. 
-    // Show local time format of target city timezone offset
     sunrise.textContent = formatTimestampToLocalTime(current.sys.sunrise, current.timezone);
     sunset.textContent = formatTimestampToLocalTime(current.sys.sunset, current.timezone);
 
-    // Time difference messages
     sunriseTimeTo.textContent = getRemainingTimeText(current.sys.sunrise, current.timezone);
     sunsetTimeTo.textContent = getRemainingTimeText(current.sys.sunset, current.timezone);
+
+    // 1. Estimated UV Index
+    const isDay = current.dt > current.sys.sunrise && current.dt < current.sys.sunset;
+    let uvIndex = 0;
+    if (isDay) {
+      const latFact = Math.max(0, 1 - Math.abs(current.coord.lat) / 90);
+      const cloudFact = 1 - (current.clouds.all / 100) * 0.7;
+      const totalDay = current.sys.sunset - current.sys.sunrise;
+      const curSecs = current.dt - current.sys.sunrise;
+      const timeFact = Math.max(0, Math.sin((curSecs / totalDay) * Math.PI));
+      uvIndex = Math.round(11 * latFact * cloudFact * timeFact * 10) / 10;
+    }
+    const uvSpan = document.getElementById('uv-index');
+    const uvDescSpan = document.getElementById('uv-desc');
+    if (uvSpan && uvDescSpan) {
+      uvSpan.textContent = uvIndex;
+      if (uvIndex <= 2) uvDescSpan.textContent = 'Low (Safe)';
+      else if (uvIndex <= 5) uvDescSpan.textContent = 'Moderate';
+      else if (uvIndex <= 7) uvDescSpan.textContent = 'High (Risk)';
+      else if (uvIndex <= 10) uvDescSpan.textContent = 'Very High';
+      else uvDescSpan.textContent = 'Extreme danger';
+    }
+
+    // 2. Visibility Card
+    const visibilitySpan = document.getElementById('visibility');
+    const visibilityDescSpan = document.getElementById('visibility-desc');
+    if (visibilitySpan && visibilityDescSpan) {
+      const visKm = (current.visibility / 1000).toFixed(1);
+      visibilitySpan.textContent = `${visKm} km`;
+      if (visKm > 8) visibilityDescSpan.textContent = 'Clear view';
+      else if (visKm > 3) visibilityDescSpan.textContent = 'Moderate haze';
+      else visibilityDescSpan.textContent = 'Foggy / low visibility';
+    }
+
+    // 3. Air Quality Indicator Card
+    const aqiLevelSpan = document.getElementById('aqi-level');
+    const aqiDescSpan = document.getElementById('aqi-desc');
+    let aqi = 2; // default Fair
+    if (airPollution && airPollution.list && airPollution.list[0]) {
+      aqi = airPollution.list[0].main.aqi;
+    }
+    if (aqiLevelSpan && aqiDescSpan) {
+      const aqiLabels = {
+        1: 'Good',
+        2: 'Fair',
+        3: 'Moderate',
+        4: 'Poor',
+        5: 'Very Poor'
+      };
+      aqiLevelSpan.textContent = `${aqi}/5`;
+      aqiDescSpan.textContent = aqiLabels[aqi] || 'Moderate';
+    }
+
+    // 4. Dew Point Card
+    const dewPointSpan = document.getElementById('dew-point');
+    const dewPointDescSpan = document.getElementById('dew-point-desc');
+    if (dewPointSpan && dewPointDescSpan) {
+      const tempC = current.main.temp;
+      const rh = current.main.humidity;
+      const a = 17.625;
+      const b = 243.04;
+      const alpha = ((a * tempC) / (b + tempC)) + Math.log(rh / 100);
+      const dewVal = (b * alpha) / (a - alpha);
+      dewPointSpan.textContent = `${Math.round(dewVal)} °C`;
+      if (dewVal < 10) dewPointDescSpan.textContent = 'Dry & Crisp';
+      else if (dewVal <= 16) dewPointDescSpan.textContent = 'Comfortable';
+      else if (dewVal <= 20) dewPointDescSpan.textContent = 'Sticky';
+      else dewPointDescSpan.textContent = 'Highly humid';
+    }
+
+    // 5. Cloud Coverage Card
+    const cloudsSpan = document.getElementById('cloud-coverage');
+    const cloudsDescSpan = document.getElementById('cloud-coverage-desc');
+    if (cloudsSpan && cloudsDescSpan) {
+      const cloudPct = current.clouds.all;
+      cloudsSpan.textContent = `${cloudPct}%`;
+      if (cloudPct < 10) cloudsDescSpan.textContent = 'Clear Skies';
+      else if (cloudPct <= 50) cloudsDescSpan.textContent = 'Partly Cloudy';
+      else if (cloudPct <= 85) cloudsDescSpan.textContent = 'Mostly Cloudy';
+      else cloudsDescSpan.textContent = 'Overcast';
+    }
+
+    // 6. Detailed Outlook paragraph
+    const outlookSpan = document.getElementById('weather-detail-paragraph');
+    if (outlookSpan) {
+      const tempC = current.main.temp;
+      const rh = current.main.humidity;
+      const a = 17.625;
+      const b = 243.04;
+      const alpha = ((a * tempC) / (b + tempC)) + Math.log(rh / 100);
+      const dewVal = (b * alpha) / (a - alpha);
+      outlookSpan.textContent = `Today in ${current.name}, expect ${current.weather[0].description} conditions. Current temperature is ${Math.round(current.main.temp)}°C (feels like ${Math.round(current.main.feels_like)}°C). Winds blow at ${Math.round(current.wind.speed * 3.6)} km/h with humidity at ${current.main.humidity}% and a dew point of ${Math.round(dewVal)}°C.`;
+    }
+
+    // 7. Activity Outdoor Suggestion
+    const suggestionSpan = document.getElementById('outdoor-suggestion');
+    if (suggestionSpan) {
+      const weatherId = current.weather[0].id;
+      if (weatherId < 600) {
+        suggestionSpan.textContent = '⚠️ Rain or storms expected. Indoor activities recommended.';
+      } else if (aqi >= 4) {
+        suggestionSpan.textContent = '⚠️ High pollution levels. Limit outdoor exposure.';
+      } else if (current.main.temp > 35) {
+        suggestionSpan.textContent = '⚠️ Excessive heat. Avoid midday sun, head out early morning.';
+      } else if (current.main.temp < 10) {
+        suggestionSpan.textContent = '❄️ Cold day. Best outside between 12 PM - 2 PM with warm layers.';
+      } else {
+        suggestionSpan.textContent = '✨ Beautiful day! Perfect time for outdoor walks, exercise or sports.';
+      }
+    }
+
+    // 8. Hourly Temperature Trend CSS Chart
+    renderHourlyCSSChart(forecast.list);
 
     // Live clock timezone alignment
     startClock(current.timezone);
 
     // 5-Day Forecast rendering
     renderForecast(forecast.list);
+  }
+
+  // Helper for weather emoji
+  function getWeatherEmoji(id) {
+    if (id === 800) return '☀️';
+    if (id >= 801 && id <= 804) return '☁️';
+    if (id >= 500 && id <= 531) return '🌧️';
+    if (id >= 300 && id <= 321) return '🌦️';
+    if (id >= 200 && id <= 232) return '⛈️';
+    if (id >= 600 && id <= 622) return '❄️';
+    if (id >= 701 && id <= 781) return '🌫️';
+    return '🌡️';
+  }
+
+  // Helper for weather category mapping
+  function getWeatherClass(id) {
+    if (id >= 200 && id <= 232) return 'thunderstorm';
+    if (id >= 300 && id <= 321) return 'drizzle';
+    if (id >= 500 && id <= 531) return 'rain';
+    if (id >= 600 && id <= 622) return 'snow';
+    if (id >= 700 && id <= 780) return 'mist';
+    if (id === 781) return 'haze';
+    if (id === 800) return 'clear';
+    if (id >= 801 && id <= 804) return 'cloudy';
+    return 'clear';
+  }
+
+  // Renders a pure CSS bar chart for the first 8 forecast periods (next 24 hours)
+  function renderHourlyCSSChart(list) {
+    const container = document.getElementById('hourly-chart-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const hourlyList = list.slice(0, 8); // next 24 hours
+    const temps = hourlyList.map(h => h.main.temp);
+    const min = Math.min(...temps);
+    const max = Math.max(...temps);
+    const range = max - min || 1;
+
+    hourlyList.forEach(item => {
+      const tempVal = Math.round(item.main.temp);
+      const timeDate = new Date(item.dt * 1000);
+      let hr = timeDate.getHours();
+      const ampm = hr >= 12 ? 'PM' : 'AM';
+      hr = hr % 12 || 12;
+      const timeLabel = `${hr} ${ampm}`;
+
+      // Calculate relative height from 10% to 90%
+      const heightPercent = ((item.main.temp - min) / range) * 60 + 20;
+
+      const column = document.createElement('div');
+      column.className = 'chart-column';
+      column.innerHTML = `
+        <span class="chart-temp-val">${tempVal}°</span>
+        <div class="chart-bar-container">
+          <div class="chart-bar-fill" style="height: ${heightPercent}%;"></div>
+        </div>
+        <img class="chart-icon-val" src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description}">
+        <span class="chart-time-val">${timeLabel}</span>
+      `;
+      container.appendChild(column);
+    });
   }
 
   // Display daily forecast cards
@@ -366,26 +590,56 @@ document.addEventListener('DOMContentLoaded', () => {
         grouped[dateKey].push(item);
     });
 
+    // Find absolute min/max temperatures for range bar alignment
+    let absMin = Infinity;
+    let absMax = -Infinity;
+    Object.values(grouped).forEach(items => {
+        items.forEach(i => {
+            if (i.main.temp < absMin) absMin = i.main.temp;
+            if (i.main.temp > absMax) absMax = i.main.temp;
+        });
+    });
+
     Object.entries(grouped).forEach(([dateKey, items], index) => {
         const temps = items.map(i => i.main.temp);
         const minTemp = Math.round(Math.min(...temps));
         const maxTemp = Math.round(Math.max(...temps));
-        const icon = items[Math.floor(items.length / 2)].weather[0].icon;
-        const desc = items[Math.floor(items.length / 2)].weather[0].description;
+        const midItem = items[Math.floor(items.length / 2)];
+        const icon = midItem.weather[0].icon;
+        const desc = midItem.weather[0].description;
+        const weatherId = midItem.weather[0].id;
+        const humidityVal = midItem.main.humidity;
+        const windVal = Math.round(midItem.wind.speed * 3.6);
         const dayId = `day-${index}`;
 
+        // Compute temperature range bar bounds
+        const rangeSpan = absMax - absMin || 1;
+        const leftPct = ((minTemp - absMin) / rangeSpan) * 100;
+        const widthPct = ((maxTemp - minTemp) / rangeSpan) * 100;
+
         const card = document.createElement('div');
-        card.className = 'card forecast-card';
+        card.className = `card forecast-card forecast-card-loaded border-${getWeatherClass(weatherId)}`;
+        card.style.animationDelay = `${index * 0.12}s`;
         card.innerHTML = `
             <div class="day-header" onclick="toggleHourly('${dayId}')">
-                <span class="forecast-day">${dateKey.split(',')[0]}</span>
-                <span class="forecast-date">${dateKey.split(',').slice(1).join(',').trim()}</span>
-                <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-                     alt="${desc}" style="width:40px;height:40px;">
-                <span class="forecast-desc" title="${desc}">${desc}</span>
-                <div class="forecast-temp">
-                    <span class="forecast-max">${maxTemp}°</span>
+                <div class="forecast-main-info">
+                    <span class="forecast-day">${dateKey.split(',')[0]}</span>
+                    <span class="forecast-date">${dateKey.split(',').slice(1).join(',').trim()}</span>
+                </div>
+                <div class="forecast-status">
+                    <img class="forecast-icon" src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${desc}">
+                    <span class="forecast-desc" title="${desc}">${desc}</span>
+                </div>
+                <div class="forecast-temp-container">
                     <span class="forecast-min">${minTemp}°</span>
+                    <div class="temp-bar-bg">
+                        <div class="temp-bar-fill" style="left: ${leftPct}%; width: ${widthPct}%;"></div>
+                    </div>
+                    <span class="forecast-max">${maxTemp}°</span>
+                </div>
+                <div class="forecast-extra-details">
+                    <span class="forecast-extra-item">💧 ${humidityVal}%</span>
+                    <span class="forecast-extra-item">💨 ${windVal}km/h</span>
                 </div>
                 <span class="expand-arrow">▼</span>
             </div>

@@ -69,9 +69,24 @@ async function handleWeatherRequest(req, res) {
     const currentData = await currentResponse.json();
     const forecastData = await forecastResponse.json();
 
+    // Fetch air pollution in parallel / sequence using coordinates from current weather
+    let airPollutionData = null;
+    if (currentData.coord && currentData.coord.lat && currentData.coord.lon) {
+      try {
+        const airUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${currentData.coord.lat}&lon=${currentData.coord.lon}&appid=${OPENWEATHER_API_KEY}`;
+        const airResponse = await fetch(airUrl);
+        if (airResponse.ok) {
+          airPollutionData = await airResponse.json();
+        }
+      } catch (airErr) {
+        console.error('Air pollution fetch failed:', airErr);
+      }
+    }
+
     return res.json({
       current: currentData,
-      forecast: forecastData
+      forecast: forecastData,
+      airPollution: airPollutionData
     });
   } catch (error) {
     console.error('Proxy fetch error:', error);
