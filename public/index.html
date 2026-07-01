@@ -74,7 +74,13 @@
           </svg>
           <input type="text" id="city-input" placeholder="Search by city name..." autocomplete="off" required>
         </div>
-        <button type="submit" class="btn btn-search">Search</button>
+        <button type="submit" class="btn btn-search" title="Search">
+          <svg class="search-btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; flex-shrink: 0;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <span class="search-text">Search</span>
+        </button>
         <button type="button" id="geo-btn" class="btn btn-geo" title="Use current location">
           <svg class="geo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
