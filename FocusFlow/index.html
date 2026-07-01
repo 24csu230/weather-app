@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow | Premium Pomodoro Dashboard</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow bg-circle-1" id="glow-1"></div>
+  <div class="ambient-glow bg-circle-2" id="glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="logo-section">
+        <h1 class="logo-title">FocusFlow</h1>
+        <span class="logo-subtitle">Flow with intent</span>
+      </div>
+      
+      <div class="header-controls">
+        <!-- Theme Toggle -->
+        <button id="theme-toggle" class="btn-icon" aria-label="Toggle Theme">
+          <!-- Sun Icon (visible in dark mode) -->
+          <svg class="icon sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+          <!-- Moon Icon (visible in light mode) -->
+          <svg class="icon moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="settings-toggle" class="btn-icon" aria-label="Open Settings">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <!-- Left Column: Circular Timer -->
+      <section class="card timer-card">
+        <!-- Session Tabs Indicator -->
+        <div class="session-tabs">
+          <button class="tab-btn active" data-mode="work">Work</button>
+          <button class="tab-btn" data-mode="shortBreak">Short Break</button>
+          <button class="tab-btn" data-mode="longBreak">Long Break</button>
+        </div>
+
+        <!-- Timer Circle -->
+        <div class="timer-visual-container">
+          <svg class="progress-ring" width="280" height="280">
+            <circle class="progress-ring-circle-bg" stroke="rgba(255, 255, 255, 0.05)" stroke-width="8" fill="transparent" r="126" cx="140" cy="140"/>
+            <circle class="progress-ring-circle" id="progress-circle" stroke="var(--primary-accent)" stroke-width="8" fill="transparent" r="126" cx="140" cy="140"/>
+          </svg>
+          
+          <div class="timer-value-display">
+            <div id="timer-countdown" class="time-text">25:00</div>
+            <div id="session-cycle-text" class="session-cycle">Work Session</div>
+          </div>
+        </div>
+
+        <!-- Active Focus Task display -->
+        <div class="active-focus-container" id="active-focus-container">
+          <span class="focus-label">Focusing on:</span>
+          <span id="active-focus-task-title" class="focus-task-title">No task selected</span>
+        </div>
+
+        <!-- Controls -->
+        <div class="timer-controls">
+          <button id="reset-btn" class="control-btn" title="Reset Timer">
+            <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </button>
+          
+          <button id="play-btn" class="control-btn play-main-btn" title="Play">
+            <svg id="play-icon" class="btn-icon-svg fill-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <svg id="pause-icon" class="btn-icon-svg hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+          </button>
+
+          <button id="skip-btn" class="control-btn" title="Skip Session">
+            <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 4 15 12 5 20 5 4"></polygon>
+              <line x1="19" y1="5" x2="19" y2="19"></line>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Task Manager list -->
+      <section class="card tasks-card">
+        <h2 class="section-title">Focus List</h2>
+        
+        <form id="task-form" class="task-input-bar">
+          <input type="text" id="task-input" placeholder="What are you focusing on next?" autocomplete="off" required>
+          <button type="submit" class="btn-add-task" aria-label="Add Task">
+            <svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </form>
+
+        <!-- Tasks Lists Container -->
+        <div class="tasks-list-container" id="tasks-list">
+          <!-- Dynamically populated tasks -->
+          <div class="empty-tasks-state">
+            <p>Your focus list is empty.</p>
+            <span>Add a task above to start tracking.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings Dialog Overlay Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button id="close-settings" class="btn-icon" aria-label="Close Settings">
+          <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form id="settings-form" class="settings-body">
+        <h4 class="settings-section-title">Interval Durations (Minutes)</h4>
+        <div class="settings-durations-grid">
+          <div class="input-group">
+            <label for="work-duration">Work</label>
+            <input type="number" id="work-duration" min="1" max="180" required>
+          </div>
+          <div class="input-group">
+            <label for="short-break-duration">Short Break</label>
+            <input type="number" id="short-break-duration" min="1" max="60" required>
+          </div>
+          <div class="input-group">
+            <label for="long-break-duration">Long Break</label>
+            <input type="number" id="long-break-duration" min="1" max="60" required>
+          </div>
+        </div>
+
+        <h4 class="settings-section-title">Preferences</h4>
+        <div class="input-toggle-group">
+          <div class="toggle-row">
+            <div class="toggle-label-info">
+              <span class="toggle-title">System Notifications</span>
+              <span class="toggle-desc">Trigger desktop alerts when intervals finish</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="notify-pref" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div class="toggle-label-info">
+              <span class="toggle-title">Audio Chime</span>
+              <span class="toggle-desc">Play sound alerts when timer finishes</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="sound-pref" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="reset-settings" class="btn-secondary">Reset Defaults</button>
+          <button type="submit" class="btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script src="script.js"></script>
+</body>
+</html>
