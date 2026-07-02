@@ -35,8 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const windDir = document.getElementById('wind-dir');
   const humidity = document.getElementById('humidity');
   const humidityDesc = document.getElementById('humidity-desc');
-  const pressure = document.getElementById('pressure');
-  const pressureDesc = document.getElementById('pressure-desc');
   const feelsLike = document.getElementById('feels-like');
   const feelsLikeDiff = document.getElementById('feels-like-diff');
   const sunrise = document.getElementById('sunrise');
@@ -409,14 +407,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Update animated weather background gradients and particles
+  // Update animated weather background gradients
   function updateAnimatedBackground(id) {
     const bgContainer = document.querySelector('.ambient-background');
-    const particleContainer = document.getElementById('weather-particles');
-    if (!bgContainer || !particleContainer) return;
-
-    // Clear existing particle elements
-    particleContainer.innerHTML = '';
+    if (!bgContainer) return;
     
     // Reset background classes on body and container
     bgContainer.className = 'ambient-background';
@@ -445,120 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bgContainer.classList.add(weatherClass);
     document.body.classList.add(weatherClass);
-
-    // Generate dynamic weather elements inside #weather-particles
-    if (weatherClass === 'bg-clear') {
-      // Rotating sun with rays
-      const sun = document.createElement('div');
-      sun.className = 'sunny-sun';
-      const rays = document.createElement('div');
-      rays.className = 'sunny-rays';
-      sun.appendChild(rays);
-      particleContainer.appendChild(sun);
-
-      // Sparkle dots
-      for (let i = 0; i < 25; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'sparkle-dot';
-        dot.style.left = `${Math.random() * 100}%`;
-        dot.style.top = `${Math.random() * 100}%`;
-        dot.style.animationDelay = `${Math.random() * 3}s`;
-        dot.style.animationDuration = `${2 + Math.random() * 2}s`;
-        particleContainer.appendChild(dot);
-      }
-    } else if (weatherClass === 'bg-cloudy') {
-      // Floating cloud shapes
-      for (let i = 0; i < 6; i++) {
-        const cloud = document.createElement('div');
-        cloud.className = 'cloud-particle';
-        const size = 150 + Math.random() * 150;
-        cloud.style.width = `${size}px`;
-        cloud.style.height = `${size * 0.4}px`;
-        cloud.style.top = `${10 + Math.random() * 40}%`;
-        cloud.style.left = `-${size}px`;
-        cloud.style.animationDelay = `${i * 8}s`;
-        cloud.style.animationDuration = `${30 + Math.random() * 25}s`;
-        cloud.style.opacity = `${0.15 + Math.random() * 0.2}`;
-        particleContainer.appendChild(cloud);
-      }
-    } else if (weatherClass === 'bg-rain') {
-      // Fast falling blue lines
-      for (let i = 0; i < 60; i++) {
-        const drop = document.createElement('div');
-        drop.className = 'rain-particle';
-        drop.style.left = `${Math.random() * 100}%`;
-        drop.style.top = `-${40 + Math.random() * 50}px`;
-        drop.style.animationDelay = `${Math.random() * 2}s`;
-        drop.style.animationDuration = `${0.6 + Math.random() * 0.5}s`;
-        particleContainer.appendChild(drop);
-      }
-    } else if (weatherClass === 'bg-drizzle') {
-      // Slow small falling dots
-      for (let i = 0; i < 40; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'drizzle-particle';
-        dot.style.left = `${Math.random() * 100}%`;
-        dot.style.top = `-${10 + Math.random() * 30}px`;
-        dot.style.animationDelay = `${Math.random() * 3}s`;
-        dot.style.animationDuration = `${1.5 + Math.random() * 1.5}s`;
-        particleContainer.appendChild(dot);
-      }
-    } else if (weatherClass === 'bg-thunderstorm') {
-      // Lightning overlay
-      const lightning = document.createElement('div');
-      lightning.className = 'lightning-flash';
-      particleContainer.appendChild(lightning);
-
-      // Thunder bolts
-      const bolt = document.createElement('div');
-      bolt.className = 'thunder-bolt';
-      bolt.style.left = `${20 + Math.random() * 60}%`;
-      particleContainer.appendChild(bolt);
-
-      // Fast heavy rain
-      for (let i = 0; i < 50; i++) {
-        const drop = document.createElement('div');
-        drop.className = 'rain-particle';
-        drop.style.left = `${Math.random() * 100}%`;
-        drop.style.top = `-${40 + Math.random() * 50}px`;
-        drop.style.animationDelay = `${Math.random() * 1.5}s`;
-        drop.style.animationDuration = `${0.5 + Math.random() * 0.4}s`;
-        particleContainer.appendChild(drop);
-      }
-    } else if (weatherClass === 'bg-snow') {
-      // Rotating white snowflakes drifting down
-      for (let i = 0; i < 50; i++) {
-        const flake = document.createElement('div');
-        flake.className = 'snow-particle';
-        const size = 5 + Math.random() * 12;
-        flake.style.width = `${size}px`;
-        flake.style.height = `${size}px`;
-        flake.style.left = `${Math.random() * 100}%`;
-        flake.style.top = `-${20 + Math.random() * 20}px`;
-        flake.style.animationDelay = `${Math.random() * 6}s`;
-        flake.style.animationDuration = `${4 + Math.random() * 5}s`;
-        particleContainer.appendChild(flake);
-      }
-    } else if (weatherClass === 'bg-mist') {
-      // Blurry white mist drifting shapes
-      for (let i = 0; i < 5; i++) {
-        const mist = document.createElement('div');
-        mist.className = 'mist-particle';
-        const size = 200 + Math.random() * 250;
-        mist.style.width = `${size}px`;
-        mist.style.height = `${size}px`;
-        mist.style.top = `${15 + Math.random() * 50}%`;
-        mist.style.left = `-${size}px`;
-        mist.style.animationDelay = `${i * 7}s`;
-        mist.style.animationDuration = `${25 + Math.random() * 20}s`;
-        particleContainer.appendChild(mist);
-      }
-    } else if (weatherClass === 'bg-haze') {
-      // Heat shimmer wave
-      const shimmer = document.createElement('div');
-      shimmer.className = 'heat-shimmer';
-      particleContainer.appendChild(shimmer);
-    }
   }
 
   // Update weather dashboard components
@@ -597,9 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
     humidity.textContent = `${current.main.humidity}%`;
     humidityDesc.textContent = getHumidityDescription(current.main.humidity);
 
-    pressure.textContent = `${current.main.pressure} hPa`;
-    pressureDesc.textContent = getPressureDescription(current.main.pressure);
-
     feelsLike.textContent = `${Math.round(current.main.feels_like)}°C`;
     const feelsLikeDiffVal = current.main.feels_like - current.main.temp;
     feelsLikeDiff.textContent = Math.abs(feelsLikeDiffVal) < 1
@@ -635,65 +512,6 @@ document.addEventListener('DOMContentLoaded', () => {
       else uvDescSpan.textContent = 'Extreme danger';
     }
 
-    // 2. Visibility Card
-    const visibilitySpan = document.getElementById('visibility');
-    const visibilityDescSpan = document.getElementById('visibility-desc');
-    if (visibilitySpan && visibilityDescSpan) {
-      const visKm = (current.visibility / 1000).toFixed(1);
-      visibilitySpan.textContent = `${visKm} km`;
-      if (visKm > 8) visibilityDescSpan.textContent = 'Clear view';
-      else if (visKm > 3) visibilityDescSpan.textContent = 'Moderate haze';
-      else visibilityDescSpan.textContent = 'Foggy / low visibility';
-    }
-
-    // 3. Air Quality Indicator Card
-    const aqiLevelSpan = document.getElementById('aqi-level');
-    const aqiDescSpan = document.getElementById('aqi-desc');
-    let aqi = 2; // default Fair
-    if (airPollution && airPollution.list && airPollution.list[0]) {
-      aqi = airPollution.list[0].main.aqi;
-    }
-    if (aqiLevelSpan && aqiDescSpan) {
-      const aqiLabels = {
-        1: 'Good',
-        2: 'Fair',
-        3: 'Moderate',
-        4: 'Poor',
-        5: 'Very Poor'
-      };
-      aqiLevelSpan.textContent = `${aqi}/5`;
-      aqiDescSpan.textContent = aqiLabels[aqi] || 'Moderate';
-    }
-
-    // 4. Dew Point Card
-    const dewPointSpan = document.getElementById('dew-point');
-    const dewPointDescSpan = document.getElementById('dew-point-desc');
-    if (dewPointSpan && dewPointDescSpan) {
-      const tempC = current.main.temp;
-      const rh = current.main.humidity;
-      const a = 17.625;
-      const b = 243.04;
-      const alpha = ((a * tempC) / (b + tempC)) + Math.log(rh / 100);
-      const dewVal = (b * alpha) / (a - alpha);
-      dewPointSpan.textContent = `${Math.round(dewVal)} °C`;
-      if (dewVal < 10) dewPointDescSpan.textContent = 'Dry & Crisp';
-      else if (dewVal <= 16) dewPointDescSpan.textContent = 'Comfortable';
-      else if (dewVal <= 20) dewPointDescSpan.textContent = 'Sticky';
-      else dewPointDescSpan.textContent = 'Highly humid';
-    }
-
-    // 5. Cloud Coverage Card
-    const cloudsSpan = document.getElementById('cloud-coverage');
-    const cloudsDescSpan = document.getElementById('cloud-coverage-desc');
-    if (cloudsSpan && cloudsDescSpan) {
-      const cloudPct = current.clouds.all;
-      cloudsSpan.textContent = `${cloudPct}%`;
-      if (cloudPct < 10) cloudsDescSpan.textContent = 'Clear Skies';
-      else if (cloudPct <= 50) cloudsDescSpan.textContent = 'Partly Cloudy';
-      else if (cloudPct <= 85) cloudsDescSpan.textContent = 'Mostly Cloudy';
-      else cloudsDescSpan.textContent = 'Overcast';
-    }
-
     // 6. Detailed Outlook paragraph
     const outlookSpan = document.getElementById('weather-detail-paragraph');
     if (outlookSpan) {
@@ -709,6 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 7. Activity Outdoor Suggestion
     const suggestionSpan = document.getElementById('outdoor-suggestion');
     if (suggestionSpan) {
+      let aqi = 2;
+      if (airPollution && airPollution.list && airPollution.list[0]) {
+        aqi = airPollution.list[0].main.aqi;
+      }
       const weatherId = current.weather[0].id;
       if (weatherId < 600) {
         suggestionSpan.textContent = '⚠️ Rain or storms expected. Indoor activities recommended.';
@@ -963,12 +785,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (h >= 30 && h <= 60) return 'Optimal comfort range';
     if (h > 60 && h <= 80) return 'High moisture levels';
     return 'Extremely damp air';
-  }
-
-  function getPressureDescription(p) {
-    if (p < 1009) return 'Low pressure (Storm potential)';
-    if (p >= 1009 && p <= 1020) return 'Normal atmospheric levels';
-    return 'High pressure (Clear conditions)';
   }
 
   function showLoader(show) {
