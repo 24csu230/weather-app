@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const cityInput = document.getElementById('city-input');
   const geoBtn = document.getElementById('geo-btn');
   const loader = document.getElementById('loader');
+  const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+  const autocompleteSpinner = document.getElementById('autocomplete-spinner');
 
   // Weather Info Elements
   const locationName = document.getElementById('location-name');
@@ -122,12 +124,230 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const query = cityInput.value.trim();
     if (query) {
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+      showDropdown(false);
+      showSpinner(false);
       fetchWeatherData({ city: query });
+    }
+  });
+
+  // Autocomplete suggestions state & logic
+  let currentSuggestions = [];
+  let selectedSuggestionIndex = -1;
+  let abortController = null;
+
+  // Debounce helper
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Helper to convert country code to flag emoji
+  function getFlagEmoji(countryCode) {
+    if (!countryCode) return '';
+    return countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => String.fromCodePoint(0x1F1E6 - 65 + char.charCodeAt(0)))
+      .join('');
+  }
+
+  function showSpinner(show) {
+    if (show) {
+      autocompleteSpinner.classList.remove('hidden');
+    } else {
+      autocompleteSpinner.classList.add('hidden');
+    }
+  }
+
+  function showDropdown(show) {
+    if (show && currentSuggestions.length > 0) {
+      autocompleteDropdown.classList.remove('hidden');
+      setTimeout(() => {
+        autocompleteDropdown.classList.add('show');
+      }, 10);
+    } else {
+      autocompleteDropdown.classList.remove('show');
+      setTimeout(() => {
+        if (!autocompleteDropdown.classList.contains('show')) {
+          autocompleteDropdown.classList.add('hidden');
+        }
+      }, 250);
+    }
+  }
+
+  function renderSuggestions(suggestions) {
+    currentSuggestions = suggestions.slice(0, 6);
+    selectedSuggestionIndex = -1;
+    autocompleteDropdown.innerHTML = '';
+
+    if (currentSuggestions.length === 0) {
+      showDropdown(false);
+      return;
+    }
+
+    currentSuggestions.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'autocomplete-item';
+      div.setAttribute('data-index', index);
+
+      const textWrapper = document.createElement('div');
+      textWrapper.className = 'autocomplete-item-text';
+
+      const cityName = document.createElement('span');
+      cityName.className = 'autocomplete-item-city';
+      cityName.textContent = item.name;
+
+      const stateName = document.createElement('span');
+      stateName.className = 'autocomplete-item-state';
+      stateName.textContent = `${item.state ? item.state + ', ' : ''}${item.country}`;
+
+      textWrapper.appendChild(cityName);
+      textWrapper.appendChild(stateName);
+
+      const flag = document.createElement('span');
+      flag.className = 'autocomplete-item-flag';
+      flag.textContent = getFlagEmoji(item.country);
+
+      div.appendChild(textWrapper);
+      div.appendChild(flag);
+
+      div.addEventListener('click', () => {
+        selectSuggestion(item);
+      });
+
+      autocompleteDropdown.appendChild(div);
+    });
+
+    showDropdown(true);
+  }
+
+  function selectSuggestion(item) {
+    cityInput.value = `${item.name}, ${item.country}`;
+    showDropdown(false);
+    fetchWeatherData({ city: `${item.name}, ${item.country}` });
+  }
+
+  function updateActiveSuggestion() {
+    const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+    items.forEach((item, idx) => {
+      if (idx === selectedSuggestionIndex) {
+        item.classList.add('active');
+        item.scrollIntoView({ block: 'nearest' });
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  const handleInput = debounce(async (e) => {
+    const query = e.target.value.trim();
+    if (query.length < 2) {
+      if (abortController) {
+        abortController.abort();
+        abortController = null;
+      }
+      currentSuggestions = [];
+      showDropdown(false);
+      showSpinner(false);
+      return;
+    }
+
+    if (abortController) {
+      abortController.abort();
+    }
+    abortController = new AbortController();
+    const signal = abortController.signal;
+
+    showSpinner(true);
+    try {
+      const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { signal });
+      if (!response.ok) {
+        throw new Error('Geocoding suggestions failed');
+      }
+      const data = await response.json();
+      renderSuggestions(data);
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Error fetching suggestions:', err);
+        showDropdown(false);
+      }
+    } finally {
+      if (abortController && abortController.signal === signal) {
+        showSpinner(false);
+      }
+    }
+  }, 300);
+
+  cityInput.addEventListener('input', handleInput);
+
+  cityInput.addEventListener('focus', () => {
+    if (cityInput.value.trim().length >= 2 && currentSuggestions.length > 0) {
+      showDropdown(true);
+    }
+  });
+
+  cityInput.addEventListener('keydown', (e) => {
+    const isDropdownVisible = !autocompleteDropdown.classList.contains('hidden') && autocompleteDropdown.classList.contains('show');
+
+    if (!isDropdownVisible) {
+      if (e.key === 'ArrowDown' && cityInput.value.trim().length >= 2 && currentSuggestions.length > 0) {
+        showDropdown(true);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        selectedSuggestionIndex = (selectedSuggestionIndex + 1) % currentSuggestions.length;
+        updateActiveSuggestion();
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        selectedSuggestionIndex = (selectedSuggestionIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+        updateActiveSuggestion();
+        break;
+      case 'Enter':
+        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < currentSuggestions.length) {
+          e.preventDefault();
+          selectSuggestion(currentSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        showDropdown(false);
+        break;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const searchSection = document.querySelector('.search-section');
+    if (searchSection && !searchSection.contains(e.target)) {
+      showDropdown(false);
     }
   });
 
   // Handle Geolocation Button
   geoBtn.addEventListener('click', () => {
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+    showDropdown(false);
+    showSpinner(false);
+
     if (!navigator.geolocation) {
       showToast('Geolocation is not supported by your browser.');
       return;

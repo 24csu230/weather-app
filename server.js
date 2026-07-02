@@ -94,6 +94,35 @@ async function handleWeatherRequest(req, res) {
   }
 }
 
+// Shared handler for proxying geocoding requests
+async function handleGeocodeRequest(req, res) {
+  const { q } = req.query;
+
+  if (!q) {
+    return res.status(400).json({ error: 'Missing parameter: q is required' });
+  }
+
+  if (!OPENWEATHER_API_KEY || OPENWEATHER_API_KEY === 'YOUR_KEY_HERE') {
+    return res.status(500).json({ error: 'OpenWeatherMap API Key is not configured. Please check your .env file.' });
+  }
+
+  try {
+    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=6&appid=${OPENWEATHER_API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      return res.status(response.status).json({ error: errorData.message || 'Geocoding failed' });
+    }
+
+    const data = await response.json();
+    return res.json(data);
+  } catch (error) {
+    console.error('Proxy geocode fetch error:', error);
+    return res.status(500).json({ error: 'Internal server error fetching geocode data' });
+  }
+}
+
 if (express) {
   // Use Express if package is installed
   const app = express();
@@ -105,6 +134,10 @@ if (express) {
   app.get('/api/weather', async (req, res) => {
     // Add compatibility helpers to Express res object
     await handleWeatherRequest(req, res);
+  });
+
+  app.get('/api/geocode', async (req, res) => {
+    await handleGeocodeRequest(req, res);
   });
   
   app.listen(PORT, () => {
@@ -144,6 +177,37 @@ if (express) {
       };
 
       await handleWeatherRequest(mockReq, mockRes);
+      return;
+    }
+
+    // Route: /api/geocode
+    if (pathname === '/api/geocode') {
+      const mockRes = {
+        writeHead(status, headers) {
+          res.writeHead(status, headers);
+        },
+        end(data) {
+          res.end(data);
+        },
+        json(data) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(data));
+        },
+        status(code) {
+          this.statusCode = code;
+          return this;
+        },
+        send(data) {
+          res.writeHead(this.statusCode || 200, { 'Content-Type': 'text/plain' });
+          res.end(data);
+        }
+      };
+
+      const mockReq = {
+        query: Object.fromEntries(parsedUrl.searchParams.entries())
+      };
+
+      await handleGeocodeRequest(mockReq, mockRes);
       return;
     }
 

@@ -73,6 +73,7 @@
             <path d="m21 21-4.3-4.3"></path>
           </svg>
           <input type="text" id="city-input" placeholder="Search by city name..." autocomplete="off" required>
+          <div id="autocomplete-spinner" class="autocomplete-spinner hidden"></div>
         </div>
         <button type="submit" class="btn btn-search" title="Search">
           <svg class="search-btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; flex-shrink: 0;">
@@ -88,6 +89,7 @@
           <span class="geo-text">Locate</span>
         </button>
       </form>
+      <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden"></div>
     </section>
 
     <!-- Main Dashboard Grid -->
